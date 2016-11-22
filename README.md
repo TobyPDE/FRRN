@@ -1,1 +1,1 @@
-# FRRN
+# Full Resolution Residual Networks (FRRN)
