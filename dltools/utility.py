@@ -1,3 +1,4 @@
+import os.path
 import signal
 import numpy as np
 import time
@@ -294,3 +295,75 @@ def create_color_label_image(np_array):
     result = result[:, :, ::-1]
 
     return result
+
+
+def get_cityscapes_path():
+    """
+    Returns the path to the cityscapes folder.
+    :return:
+    """
+    filename = "cityscapes_path.txt"
+    cs_path = "/"
+    # Does a file already exist?
+    if os.path.exists(filename):
+        # Read the path
+        with open(filename) as f:
+            cs_path = f.read()
+
+    # Ask the user for the actual path
+    user_input = input("Enter path to CityScapes folder [%s]: " % cs_path)
+
+    # Did the user enter something?
+    if user_input != "":
+        # Yes, update the file
+        with open(filename) as f:
+            f.write(user_input)
+        cs_path = user_input
+
+    return cs_path
+
+
+def get_interactive_input(phrase, filename, default):
+    """
+    Returns the path to the cityscapes folder.
+    :return:
+    """
+    value = default
+    # Does a file already exist?
+    if os.path.exists(filename):
+        # Read the path
+        with open(filename, "r") as f:
+            value = f.read()
+
+    # Ask the user for the actual path
+    user_input = input("%s [%s]: " % (phrase, value))
+
+    # Did the user enter something?
+    if user_input != "":
+        # Yes, update the file
+        with open(filename, "w") as f:
+            f.write(user_input)
+        value = user_input
+
+    return value
+
+
+def tensor2opencv(image):
+    """
+    Converts an image from the tensor representation for Theano to the OpenCv representation.
+    :param image: The image to convert.
+    :return: The converted image.
+    """
+    image = np.rollaxis(image, 0, 3)
+    return image[:, :, ::-1]
+
+
+def opencv2tensor(image):
+    """
+    Converts an image from the opencv representation to the tensor for Theano representation.
+    :param image: The image to convert.
+    :return: The converted image.
+    """
+    return np.rollaxis(image[:,:,::-1], 2)
+
+

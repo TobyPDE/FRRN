@@ -86,7 +86,7 @@ class CityscapesHDDDataProvider(AbstractThreadedDataProvider):
         super(CityscapesHDDDataProvider, self).__init__()
 
         # Load the image names
-        fine_annotations = cityscapesutil.image_names(base_folder, "file_folder")
+        fine_annotations = cityscapesutil.image_names(base_folder, file_folder)
 
         # Merge the two
         self.image_names = [(x, file_folder != "train_extra") for x in fine_annotations]

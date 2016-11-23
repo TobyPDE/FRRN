@@ -67,13 +67,11 @@ def load_images(image_names, downscale_factor=1):
 
     #Get all the images in the subfolders
     for i, imname in enumerate(image_names):
-        print("\r%d/%d" % (i, len(image_names)), end="")
         im = cv2.imread(imname)
         if downscale_factor != 1:
             im = cv2.resize(im, (W, H), interpolation=cv2.INTER_LANCZOS4)
 
         X[i] = np.rollaxis(im[:,:,::-1], 2)  # cv2 to theano (BGR to RGB and HWC to CHW)
-    print("")
     return X
 
 
@@ -137,7 +135,6 @@ def load_labels(image_names, fine=True, downscale_factor=None, label_downscale_t
 
     #Find the corresponding label images
     for i, name in enumerate(image_names):
-        #print("\r%d/%d" % (i, len(image_names)), end="")
         name = name.replace('leftImg8bit', 'gtFine' if fine else 'gtCoarse',1)
         name = name.replace('leftImg8bit', 'gtFine_labelIds' if fine else 'gtCoarse_labelIds')
         im = cv2.imread(name, IMREAD_UNCHANGED)
@@ -148,6 +145,5 @@ def load_labels(image_names, fine=True, downscale_factor=None, label_downscale_t
 
             im_mapped = downscale_labels(im_mapped, downscale_factor, label_downscale_threshold)
         y[i] = im_mapped
-    #print("")
 
     return y

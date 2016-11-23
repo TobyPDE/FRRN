@@ -1,24 +1,35 @@
-import cv2
-import numpy as np
 import lasagne
+import cv2
+import dltools
 import theano
 import theano.tensor as T
 import sys
-import dltools
+import numpy as np
 
 sys.setrecursionlimit(10000)
 
-sample_factor = 2
-model_filename = sys.argv[1]
-use_runtime_augmentation = True
+config = {
+    "num_classes": 19,
+    "sample_factor": 2,
+    "model_filename": "models/frrn_b.npz",
+    "base_channels": 48,
+    "fr_channels": 32,
+    "cityscapes_folder": "/"
+}
 
 ########################################################################################################################
-# LOAD THE DATA
+# Ask for the cityscapes path
 ########################################################################################################################
 
-with dltools.utility.VerboseTimer("Load data"):
-    val_images = dltools.utility.load_np_data_array("data/city_scapes_val_images_down_%d.npz" % sample_factor)
-    val_labels = dltools.utility.load_np_data_array("data/city_scapes_val_labels_down_%d.npz" % sample_factor)
+config["cityscapes_folder"] = dltools.utility.get_interactive_input(
+    "Enter path to CityScapes folder",
+    "cityscapes_folder.txt",
+    config["cityscapes_folder"])
+
+config["model_filename"] = dltools.utility.get_interactive_input(
+    "Enter model filename",
+    "model_filename.txt",
+    config["model_filename"])
 
 ########################################################################################################################
 # DEFINE THE NETWORK
@@ -29,23 +40,21 @@ with dltools.utility.VerboseTimer("Define network"):
     input_var = T.ftensor4()
 
     builder = dltools.architectures.FRRNBBuilder(
-        base_channels=48,
-        lanes=32,
+        base_channels=config["base_channels"],
+        lanes=config["fr_channels"],
         multiplier=2,
-        num_classes=19,
-        use_bilinear_upscaling=True
+        num_classes=config["num_classes"]
     )
     network = builder.build(
         input_var=input_var,
-        input_shape=(None, 3, 512, 1024))
-
+        input_shape=(None, 3, 1024 // config["sample_factor"], 2048 // config["sample_factor"]))
 
 #######################################################################################################################
 # LOAD MODEL
 ########################################################################################################################
 
 with dltools.utility.VerboseTimer("Load model"):
-    network.load_model(model_filename)
+    network.load_model(config["model_filename"])
 
 ########################################################################################################################
 # COMPILE THEANO VAL FUNCTIONS
@@ -53,26 +62,37 @@ with dltools.utility.VerboseTimer("Load model"):
 
 with dltools.utility.VerboseTimer("Compile validation function"):
     test_predictions = lasagne.layers.get_output(network.output_layers, deterministic=True)[0]
-    eval_fn = theano.function(
+    val_fn = theano.function(
         inputs=[input_var],
         outputs=test_predictions
     )
 
-indices = np.arange(len(val_images))
-#np.random.shuffle(indices)
+########################################################################################################################
+# Visualize the data
+########################################################################################################################
 
-for j in range(len(val_images)):
-    i = indices[j]
+validation_provider = dltools.data.CityscapesHDDDataProvider(
+    config["cityscapes_folder"],
+    file_folder="val",
+    batch_size=1,
+    augmentor=None,
+    sampling_factor=config["sample_factor"],
+    random=False
+)
+
+while True:
+    validation_provider.next()
+    x, t = validation_provider.current()
     # Process the image
-    network_output = np.array(eval_fn(val_images[i:i + 1])[0])
+    network_output = val_fn(x)
     # Obtain a prediction
-    predicted_labels = np.argmax(network_output, axis=0)
+    predicted_labels = np.argmax(network_output[0], axis=0)
 
     prediction_visualization = dltools.utility.create_color_label_image(predicted_labels)
-    ground_truth_visualization = dltools.utility.create_color_label_image(val_labels[i])
-    image = dltools.utility.tensor2opencv(val_images[i])
+    ground_truth_visualization = dltools.utility.create_color_label_image(t[0])
+    image = dltools.utility.tensor2opencv(x[0])
 
-    cv2.imshow("Image", image)
+    cv2.imshow("Image", image.astype('uint8'))
     cv2.imshow("Ground Truth", ground_truth_visualization)
     cv2.imshow("Prediction", prediction_visualization)
     cv2.waitKey()
