@@ -1,7 +1,7 @@
 cityscapes_folder.txt
 model_filename.txt
 log_filename.txt
-
+logs/
 
 
 # Created by https://www.gitignore.io/api/pycharm,python
