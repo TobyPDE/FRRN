@@ -2,7 +2,7 @@
 
 This repository contains code to train and qualitatively evaluate 
 *Full Resolution Residual Networks (FRRNs)* as described in
-**Tobias Pohlen, Alexander Hermans, Markus Mathias, Bastian Leibe. Full Resolution Residual Networks for Semantic Segmentation in Street Scenes. [arXiv:xxxxxxx](http://arxiv.org/abs/xxxxxx)**. 
+**Tobias Pohlen, Alexander Hermans, Markus Mathias, Bastian Leibe. Full Resolution Residual Networks for Semantic Segmentation in Street Scenes. [arXiv:1611.08323](https://arxiv.org/abs/1611.08323)**. 
 
 ## Demo  Video
 [Click here to watch our video](https://www.youtube.com/watch?v=PNzQ4PNZSzc).
