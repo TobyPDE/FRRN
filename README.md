@@ -9,15 +9,14 @@ This repository contains code to train and qualitatively evaluate
 
 ## Prerequisite
 
-In order to run the code, your setup has to meet the following minimum requirements:
+In order to run the code, your setup has to meet the following minimum requirements (tested versions in parentheses. Other versions might work, too):
 
-* Python 3
-    * Theano with CUDA
-    * Lasagne
-    * OpenCV
-    * Scikit-Learn
-    * Termcolor
-    * Numpy
+* Python 3 (3.5.1)
+    * Theano (0.9.0.dev1) with cuDNN (5004)
+    * Lasagne (0.2.dev1)
+    * OpenCV (3.1.0)
+    * Scikit-Learn (0.17.1)
+    * Numpy (1.11.0)
 
 ## How do I evaluate the pre-trained model?
 
