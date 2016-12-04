@@ -4,7 +4,6 @@ import numpy as np
 import time
 import theano.tensor as T
 from functools import reduce as _reduce
-from termcolor import colored
 
 
 class Uninterrupt(object):
