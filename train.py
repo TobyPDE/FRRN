@@ -11,8 +11,8 @@ sys.setrecursionlimit(10000)
 config = {
     "num_classes": 19,
     "batch_size": 3,
-    "sample_factor": 8,
-    "validation_frequency": 5,
+    "sample_factor": 2,
+    "validation_frequency": 500,
     "validation_batch_size": 3,
     # Recall that during validation, the entire batch is passed through
     # the whole network. If your GPU memory does not suffice, this will
