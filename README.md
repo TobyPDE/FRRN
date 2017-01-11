@@ -36,6 +36,9 @@ Step by step guide:
 3. Inspect the configuration at the beginning of the file `train.py` and change it if necessary.
 3. Run `$ python train.py`
 
+## How do I monitor training?
+
+Simply run `$ watch -n2.0 python log_monitor.py [your log file]`. There are two things to consider: First, as the logging creates a lot of files (Will be fixed in the future), I advise you to use a new folder for each training run. Second, the log files are not continuously updated. Hence, you might have to wait a few iterations before you can see the scores from the last evaluation run. 
 
 ## License
 
