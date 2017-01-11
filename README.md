@@ -40,6 +40,9 @@ Step by step guide:
 
 Simply run `$ watch -n2.0 python log_monitor.py [your log file]`. There are two things to consider: First, as the logging creates a lot of files (Will be fixed in the future), I advise you to use a new folder for each training run. Second, the log files are not continuously updated. Hence, you might have to wait a few iterations before you can see the scores from the last evaluation run. 
 
+I usually use tmux in order to view the training and the logging process simultaneously. 
+![Training and logging processes side by side](http://geekstack.net/screenshot.png "Training and logging processes side by side using tmux")
+
 ## License
 
 The MIT License (MIT)
