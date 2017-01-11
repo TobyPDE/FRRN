@@ -11,8 +11,12 @@ sys.setrecursionlimit(10000)
 config = {
     "num_classes": 19,
     "batch_size": 3,
-    "sample_factor": 2,
-    "validation_frequency": 500,
+    "sample_factor": 8,
+    "validation_frequency": 5,
+    "validation_batch_size": 3,
+    # Recall that during validation, the entire batch is passed through
+    # the whole network. If your GPU memory does not suffice, this will
+    # crash the process.
     "model_filename": "models/frrn_b.npz",
     "log_filename": "logs/frrn_b.log",
     "snapshot_frequency": 500,
@@ -92,7 +96,7 @@ with dltools.utility.VerboseTimer("Define loss"):
     test_classification_loss = dltools.utility.bootstrapped_categorical_cross_entropy4d_loss(
         test_predictions,
         target_var,
-        batch_size = config["batch_size"],
+        batch_size = config["validation_batch_size"],
         multiplier = 64)
 
     loss = classification_loss
@@ -174,7 +178,7 @@ with dltools.utility.VerboseTimer("Optimize"):
     validation_provider = dltools.data.CityscapesHDDDataProvider(
         config["cityscapes_folder"],
         file_folder="val",
-        batch_size=1,
+        batch_size=config["validation_batch_size"],
         augmentor=None,
         sampling_factor=config["sample_factor"],
         random=False
