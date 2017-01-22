@@ -33,8 +33,7 @@ class LoggingHook(object):
         )
         self.logger.log(
             key="losses",
-            message=np.asarray(kwargs["losses"]),
-            is_numpy=True
+            message=np.asarray(kwargs["losses"])
         )
 
 
@@ -145,8 +144,7 @@ class SegmentationValidationHook(object):
 
             self.logger.log(
                 key="conf_matrix",
-                message=conf_matrix,
-                is_numpy=True
+                message=conf_matrix
             )
             self.logger.log(
                 key="validation_loss",

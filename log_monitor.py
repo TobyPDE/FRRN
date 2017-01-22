@@ -1,19 +1,24 @@
 import sys
-from custom_log import FileLogReader
+from dltools.logging import FileLogReader
 import numpy as np
+import time
 
 history = 25
-
 log_filename = sys.argv[1]
-with FileLogReader(log_filename) as reader:
+
+reader = FileLogReader(log_filename)
+
+while True:
     reader.update()
     format = "%30s: %3.6f"
 
-    # for s in reader.logs["setup"]:
-    #    print(s)
-
-    for s in reader.logs["status"][-5:]:
-        print("%s" % s)
+    print("\n")
+    print("=" * 40)
+    try:
+        for s in reader.logs["status"][-5:]:
+            print("%s" % s)
+    except:
+        pass
 
     print("")
     print("Training status")
@@ -21,29 +26,25 @@ with FileLogReader(log_filename) as reader:
 
     # Print the number of processed batches
     try:
-        print(format % ("Num processed batches", float(reader.logs["update_counter"][-1])))
+        print(format % ("Num processed batches", reader.logs["update_counter"][-1]))
     except:
         pass
 
     # Print the average training error for the last 50 iterations
     try:
-        avg_losses = np.median(reader.logs["losses"][-history:], axis=0)
-        if type(avg_losses) == np.float32:
-            print(format % ("Training error %2d" % (1), avg_losses))
-        else:
-            for i in range(len(avg_losses)):
-                print(format % ("Training error %2d" % (i + 1), avg_losses[i]))
+        avg_losses = np.mean(reader.logs["losses"][-history:], axis=0)
+        print(format % ("Training error", avg_losses))
     except Exception as e:
         print(e)
         pass
 
     # Print the average update times for the last 50 iterations
     try:
-        print(format % ("Data times", np.average([float(x) for x in reader.logs["data_runtime"][-history:]])))
+        print(format % ("Data times", np.average(reader.logs["data_runtime"][-history:])))
     except:
         pass
     try:
-        print(format % ("Update times", np.average([float(x) for x in reader.logs["update_runtime"][-history:]])))
+        print(format % ("Update times", np.average(reader.logs["update_runtime"][-history:])))
     except:
         pass
 
@@ -58,9 +59,11 @@ with FileLogReader(log_filename) as reader:
         pass
 
     try:
-        num_labels = 19
+        # Get all confusion matrices
+        matrices = [np.asarray(m) for m in reader.logs["conf_matrix"]]
+        num_labels = matrices[0].shape[0]
         ious = [np.average([m[i, i] / (np.sum(m[:, i]) + np.sum(m[i, :]) - m[i, i]) for i in range(0, num_labels)]) for m in
-                reader.logs["conf_matrix"]]
+                matrices]
         pixel_acc_scores = [np.sum(np.diag(m)) / np.sum(m) for m in reader.logs["conf_matrix"]]
 
         # Print the last validation accuracy
@@ -100,3 +103,5 @@ with FileLogReader(log_filename) as reader:
         print(format % ("Index", float(reader.logs["validation_checkpoint"][best_iou_index])))
     except:
         pass
+
+    time.sleep(1)
