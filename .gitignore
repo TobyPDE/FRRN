@@ -1,8 +1,12 @@
 cityscapes_folder.txt
 model_filename.txt
+model_filename_2.txt
 log_filename.txt
+log_filename_2.txt
+data.txt
 logs/
 .vscode/
+data/
 
 # Created by https://www.gitignore.io/api/pycharm,python
 
