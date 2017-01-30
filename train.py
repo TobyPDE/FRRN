@@ -79,7 +79,7 @@ with dltools.utility.VerboseTimer("Define loss"):
 
     # Get the original predictions back
     # Set deterministic=False if you want to train with batch norm enabled
-    all_predictions, split_outputs = dltools.hybrid_training.get_split_outputs(network, deterministic=False)
+    all_predictions, split_outputs, split_shapes = dltools.hybrid_training.get_split_outputs(network, deterministic=False)
     predictions = all_predictions[0]
 
     test_all_outputs = lasagne.layers.get_output(network.output_layers, deterministic=True)
@@ -107,18 +107,19 @@ with dltools.utility.VerboseTimer("Define loss"):
 
 with dltools.utility.VerboseTimer("Compile update functions"):
     param_blocks, params = dltools.hybrid_training.split_params(network)
+    forward_pass_fn, givens = dltools.hybrid_training.compile_forward_pass(split_outputs, split_shapes, [input_var, target_var])
     grad_fns = dltools.hybrid_training.compile_grad_functions(
         split_outputs,
         param_blocks,
         [input_var, target_var],
         loss,
-        {})
+        givens)
 
     # Optimization parameters
     learning_rate = T.fscalar()
 
     # Create the update function
-    grad_vars = dltools.optimizer.get_gradient_variables(params)
+    grad_vars = dltools.hybrid_training.get_gradient_variables(params)
 
     # Choose whatever optimizer you like
     updates = lasagne.updates.adam(grad_vars, params, learning_rate=learning_rate)
@@ -141,6 +142,7 @@ with dltools.utility.VerboseTimer("Compile update functions"):
             lr = np.float32(1e-4)
         
         # Compute all gradients
+        forward_pass_fn(*args);
         loss, grads = dltools.hybrid_training.compute_grads(grad_fns, param_blocks, *args)
         print("loss=%e, learning_rate=%e, update_counter=%d" % (loss, lr, update_counter))
         update_fn(lr, *grads)

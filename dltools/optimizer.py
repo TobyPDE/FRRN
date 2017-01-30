@@ -59,12 +59,3 @@ class MiniBatchOptimizer(object):
                     losses=losses,
                     runtime=t.interval)
 
-
-def get_gradient_variables(params):
-    """
-    Creates shared variables in order to accumulate the gradients off the GPU.
-    :param params: A list of trainable parameters.
-    :return: A list of gradient variables.
-    """
-    return [T.zeros_like(p) for p in params]
-
