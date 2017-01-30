@@ -1,5 +1,5 @@
 import theano.tensor as T
-
+import time
 from . import utility
 
 
@@ -8,16 +8,16 @@ class MiniBatchOptimizer(object):
     This class optimizes a neural network using Mini batches.
     """
 
-    def __init__(self, train_fn, data_sources, hooks):
+    def __init__(self, train_fn, data_provider, hooks):
         """
         Initializes a new instance of the MiniBatchOptimizer class.
 
         :param train_fn: The function that updates the network parameters. It has to return a list of losses.
-        :param data_sources: A list of data sources that feed into the train_fn.
+        :param data_provider: A single data provider.
         :param hooks: A list of hooks that are called at certain points in the training process.
         """
         self.train_fn = train_fn
-        self.data_sources = data_sources
+        self.data_provider = data_provider
         self.hooks = hooks
 
     def call_hooks(self, **kwargs):
@@ -46,16 +46,15 @@ class MiniBatchOptimizer(object):
 
                 # Advance the data_source iterators
                 # Gather the arguments for the training function
-                train_fn_args = []
-                for s in self.data_sources:
-                    s.next()
-                    train_fn_args.extend(s.current())
+                self.data_provider.next()
+                data = self.data_provider.current()
 
-                with utility.Timer() as t:
-                    losses = self.train_fn(*train_fn_args)
+                start = time.time()
+                losses = self.train_fn(data[0], data[1], update_counter)
+                duration = time.time() - start
 
                 self.call_hooks(
                     update_counter=update_counter,
                     losses=losses,
-                    runtime=t.interval)
+                    runtime=duration)
 

@@ -1,5 +1,5 @@
 from collections import OrderedDict
-
+import numpy as np
 import re
 import lasagne
 import theano

@@ -62,8 +62,10 @@ class AbstractThreadedDataProvider(AbstractDataProvider):
         self.next_batch_mutex.release()
 
         # Compute the next batch async
-        thread = Thread(target=self.compute_next_batch)
-        thread.start()
+        # Because of the GIL, it's actually faster to not run the batch-processing in a thread
+        # Unfortunately, theano doesn't release the GIL while executing functions.
+        # OLD: thread = Thread(target=self.compute_next_batch)
+        # OLD: thread.start()
 
         return result
 
