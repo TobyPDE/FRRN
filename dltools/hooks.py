@@ -22,7 +22,6 @@ class LoggingHook(object):
         :param kwargs: A list of named arguments.
         """
 
-        # Base the reporting on the specific tags
         self.logger.log(
             key="status",
             message="-> Done performing update (%.2fs)" % kwargs["runtime"]
@@ -41,21 +40,17 @@ class SnapshotHook(object):
     """
     This hook creates regular snapshots of the network.
     """
-    def __init__(self, filename, network, frequency=300, tags=None):
+    def __init__(self, filename, network, frequency=300):
         """
         Initializes a new instance of the SnapshotHook class.
 
         :param filename: The base filename of the model.
         :param network: The network instance to store.
         :param frequency: The snapshot frequency.
-        :param tags: The tags at which a snapshot shall be generated
         """
-        if tags is None:
-            tags = ["before_get_data"]
         self.filename = filename
         self.network = network
         self.frequency = frequency
-        self.tags = tags
 
     def update(self, **kwargs):
         """
@@ -65,7 +60,7 @@ class SnapshotHook(object):
         :return:
         """
         # Run the hook now?
-        if len(set(self.tags).intersection(kwargs.keys())) > 0 and kwargs["update_counter"] % self.frequency == 0:
+        if kwargs["update_counter"] % self.frequency == 0:
             # Yes
             np.savez(
                 "%s_snapshot_%d.npz" % (self.filename, kwargs["update_counter"]),
