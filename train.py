@@ -1,6 +1,6 @@
 import cs_dataloader
 import lasagne
-
+import logsystem
 import dltools
 import theano
 import theano.tensor as T
@@ -154,7 +154,7 @@ with dltools.utility.VerboseTimer("Compile validation function"):
 ########################################################################################################################
 
 with dltools.utility.VerboseTimer("Optimize"):
-    logger = dltools.logging.FileLogWriter(config["log_filename"])
+    logger = logsystem.FileLogWriter(config["log_filename"])
 
     provider = cs_dataloader.DataProvider(
         imgs=dltools.utility.get_image_label_pairs(config["cityscapes_folder"], "train"),

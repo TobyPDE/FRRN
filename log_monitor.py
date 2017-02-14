@@ -1,5 +1,5 @@
 import sys
-from dltools.logging import FileLogReader
+from logsystem import FileLogReader
 import numpy as np
 import time
 

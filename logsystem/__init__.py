@@ -1,6 +1,8 @@
 import json
+
 import numpy as np
-from dltools.filelock.filelock import FileLock
+
+from logsystem.filelock.filelock import FileLock
 
 
 class FileLogWriter(object):
