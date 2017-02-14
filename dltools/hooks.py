@@ -114,6 +114,7 @@ class SegmentationValidationHook(object):
 
             accumulated_loss = 0
 
+            self.data_provider.reset()
             for batch_counter in range(self.data_provider.get_num_batches()):
                 self.logger.log(
                     key="status",
@@ -121,8 +122,7 @@ class SegmentationValidationHook(object):
                 )
                 print("--> Validate batch %d/%d" % (batch_counter + 1, self.data_provider.get_num_batches()))
 
-                self.data_provider.next()
-                images, targets = self.data_provider.current()
+                images, targets = self.data_provider.next()
 
                 predictions, loss = self.val_fn(images, targets)
 

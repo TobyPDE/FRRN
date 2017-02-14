@@ -46,8 +46,7 @@ class MiniBatchOptimizer(object):
 
                 # Advance the data_source iterators
                 # Gather the arguments for the training function
-                self.data_provider.next()
-                data = self.data_provider.current()
+                data = self.data_provider.next()
 
                 start = time.time()
                 losses = self.train_fn(data[0], data[1], update_counter)

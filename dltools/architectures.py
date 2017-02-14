@@ -241,9 +241,9 @@ class AbstractFRRNBuilder(AbstractBuilder):
         return network
 
 
-class FRRNBBuilder(AbstractFRRNBuilder):
+class FRRNABuilder(AbstractFRRNBuilder):
     """
-    Builds the FRRN B architecture.
+    Builds the FRRN A architecture.
     """
 
     def __init__(self, **kwargs):
@@ -254,7 +254,7 @@ class FRRNBBuilder(AbstractFRRNBuilder):
         :param lanes: The number of autobahn lanes.
         :param multiplier: The channel multiplier.
         """
-        super(FRRNBBuilder, self).__init__(**kwargs)
+        super(FRRNABuilder, self).__init__(**kwargs)
         self.alpha = 1 - math.pow(1 - 0.1, 1 / 5)
 
     def build(self, input_var, input_shape):
@@ -315,6 +315,115 @@ class FRRNBBuilder(AbstractFRRNBuilder):
         network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 4, multiplier=self.multiplier ** 3)
         network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 4, multiplier=self.multiplier ** 3)
 
+        # Unpooling
+        network = BilinearUpscaleLayer(network, factor=2)
+        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 3, multiplier=self.multiplier ** 2)
+        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 3, multiplier=self.multiplier ** 2)
+
+        # Unpooling
+        network = BilinearUpscaleLayer(network, factor=2)
+        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 2)
+        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 2)
+        
+        # Unpooling
+        network = BilinearUpscaleLayer(network, factor=2)
+        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 1)
+        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 1)
+
+        self.add_split([network, autobahn], result)
+        self.alpha = 1 - math.pow(1 - 0.1, 1 / 1)
+        
+        # Unpooling
+        network = BilinearUpscaleLayer(network, factor=2)
+        network = lasagne.layers.ConcatLayer([network, autobahn])
+
+        network = self.add_ru(network, result, self.base_channels + self.lanes, self.base_channels)
+        network = self.add_ru(network, result, self.base_channels, self.base_channels)
+        network = self.add_ru(network, result, self.base_channels, self.base_channels)
+        
+        # Classification layer
+        network = self.add_conv(network, result, self.num_classes, (1, 1), bn=False, nonlinearity=False, bias=True)
+        network = lasagne.layers.NonlinearityLayer(network, AbstractBuilder.log_softmax_4d)
+
+        result.output_layers.append(network)
+
+        return result
+
+
+class FRRNBBuilder(AbstractFRRNBuilder):
+    """
+    Builds the FRRN B architecture.
+    """
+
+    def __init__(self, **kwargs):
+        """
+        Initializes a new instance of the FRRNBBuilder.
+
+        :param base_channels: The number of base_channels.
+        :param lanes: The number of autobahn lanes.
+        :param multiplier: The channel multiplier.
+        """
+        super(FRRNBBuilder, self).__init__(**kwargs)
+        self.alpha = 1 - math.pow(1 - 0.1, 1 / 5)
+
+    def build(self, input_var, input_shape):
+        """
+        Builds the network.
+
+        :param input_var: The input variable.
+        :param input_shape: The input shape.
+        :return: The resulting network.
+        """
+        result = nnet.NeuralNetwork()
+
+        network = lasagne.layers.InputLayer(
+            input_var=input_var,
+            shape=input_shape)
+        result.input_layers.append(network)
+
+        network = self.add_conv(network, result, self.base_channels, (5, 5))
+
+        # Add the full-res block
+        network = self.add_ru(network, result, self.base_channels, self.base_channels)
+        network = self.add_ru(network, result, self.base_channels, self.base_channels)
+        network = self.add_ru(network, result, self.base_channels, self.base_channels)
+
+        autobahn = self.add_conv(network, result, self.lanes, (1, 1), nonlinearity=False)
+
+        self.add_split([network, autobahn], result)
+        self.alpha = 1 - math.pow(1 - 0.1, 1 / 4)
+
+        # Pooling
+        network = lasagne.layers.MaxPool2DLayer(network, stride=2, pool_size=(2, 2))
+        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 1)
+        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 1)
+        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 1)
+
+        self.add_split([network, autobahn], result)
+        self.alpha = 1 - math.pow(1 - 0.1, 1 / 3)
+
+        # Pooling
+        network = lasagne.layers.MaxPool2DLayer(network, stride=2, pool_size=(2, 2))
+        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 2)
+        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 2)
+        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 2)
+        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 2)
+
+        # Pooling
+        network = lasagne.layers.MaxPool2DLayer(network, stride=2, pool_size=(2, 2))
+        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 3)
+
+        self.add_split([network, autobahn], result)
+        self.alpha = 1 - math.pow(1 - 0.1, 1 / 2)
+
+        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 3)
+
+        # Pooling
+        network = lasagne.layers.MaxPool2DLayer(network, stride=2, pool_size=(2, 2))
+
+        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 4, multiplier=self.multiplier ** 3)
+        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 4, multiplier=self.multiplier ** 3)
+
         network = lasagne.layers.MaxPool2DLayer(network, stride=2, pool_size=(2, 2))
         network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 5, multiplier=self.multiplier ** 3)
         network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 5, multiplier=self.multiplier ** 3)
@@ -333,16 +442,16 @@ class FRRNBBuilder(AbstractFRRNBuilder):
         network = BilinearUpscaleLayer(network, factor=2)
         network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 2)
         network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 2)
-        
+
         # Unpooling
         network = BilinearUpscaleLayer(network, factor=2)
         network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 1)
-        
+
         network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 1)
 
         self.add_split([network, autobahn], result)
         self.alpha = 1 - math.pow(1 - 0.1, 1 / 1)
-        
+
         # Unpooling
         network = BilinearUpscaleLayer(network, factor=2)
         network = lasagne.layers.ConcatLayer([network, autobahn])
@@ -350,7 +459,7 @@ class FRRNBBuilder(AbstractFRRNBuilder):
         network = self.add_ru(network, result, self.base_channels + self.lanes, self.base_channels)
         network = self.add_ru(network, result, self.base_channels, self.base_channels)
         network = self.add_ru(network, result, self.base_channels, self.base_channels)
-        
+
         # Classification layer
         network = self.add_conv(network, result, self.num_classes, (1, 1), bn=False, nonlinearity=False, bias=True)
         network = lasagne.layers.NonlinearityLayer(network, AbstractBuilder.log_softmax_4d)
@@ -394,47 +503,45 @@ class FRRNCBuilder(AbstractFRRNBuilder):
         network = self.add_conv(network, result, self.base_channels, (5, 5))
 
         # Add the full-res block
-        network = self.add_ru(network, result, self.base_channels, self.base_channels)
-        network = self.add_ru(network, result, self.base_channels, self.base_channels)
-        network = self.add_ru(network, result, self.base_channels, self.base_channels)
+        network = self.add_conv(network, result, num_filters=32, filter_size=(3, 3))
+        network = self.add_conv(network, result, num_filters=32, filter_size=(3, 3))
+        network = self.add_conv(network, result, num_filters=32, filter_size=(3, 3))
+        network = self.add_conv(network, result, num_filters=32, filter_size=(3, 3))
 
-        autobahn = self.add_conv(network, result, self.lanes, (1, 1), nonlinearity=False)
+        self.add_split([network], result)
 
-        # Pooling
-        network = lasagne.layers.MaxPool2DLayer(network, stride=2, pool_size=(2, 2))
-        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 1)
-        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 1)
-        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 1)
+        network = self.add_conv(network, result, num_filters=32, filter_size=(3, 3))
+        network = self.add_conv(network, result, num_filters=32, filter_size=(3, 3))
+        network = self.add_conv(network, result, num_filters=32, filter_size=(3, 3))
+        network = self.add_conv(network, result, num_filters=32, filter_size=(3, 3))
 
-        # Pooling
-        network = lasagne.layers.MaxPool2DLayer(network, stride=2, pool_size=(2, 2))
-        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 2)
-        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 2)
-        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 2)
-        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 2)
+        self.add_split([network], result)
 
-        # Pooling
-        network = lasagne.layers.MaxPool2DLayer(network, stride=2, pool_size=(2, 2))
-        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 3)
-        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 3)
+        network = self.add_conv(network, result, num_filters=32, filter_size=(3, 3))
+        network = self.add_conv(network, result, num_filters=32, filter_size=(3, 3))
+        network = self.add_conv(network, result, num_filters=32, filter_size=(3, 3))
+        network = self.add_conv(network, result, num_filters=32, filter_size=(3, 3))
 
-        # Unpooling
-        network = BilinearUpscaleLayer(network, factor=2)
-        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 2)
-        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 2)
+        self.add_split([network], result)
 
-        # Unpooling
-        network = BilinearUpscaleLayer(network, factor=2)
-        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 1)
-        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 1)
+        network = self.add_conv(network, result, num_filters=32, filter_size=(3, 3))
+        network = self.add_conv(network, result, num_filters=32, filter_size=(3, 3))
+        network = self.add_conv(network, result, num_filters=32, filter_size=(3, 3))
+        network = self.add_conv(network, result, num_filters=32, filter_size=(3, 3))
 
-        # Unpooling
-        network = BilinearUpscaleLayer(network, factor=2)
-        network = lasagne.layers.ConcatLayer([network, autobahn])
+        self.add_split([network], result)
 
-        network = self.add_ru(network, result, self.base_channels + self.lanes, self.base_channels)
-        network = self.add_ru(network, result, self.base_channels, self.base_channels)
-        network = self.add_ru(network, result, self.base_channels, self.base_channels)
+        network = self.add_conv(network, result, num_filters=32, filter_size=(3, 3))
+        network = self.add_conv(network, result, num_filters=32, filter_size=(3, 3))
+        network = self.add_conv(network, result, num_filters=32, filter_size=(3, 3))
+        network = self.add_conv(network, result, num_filters=32, filter_size=(3, 3))
+
+        self.add_split([network], result)
+
+        network = self.add_conv(network, result, num_filters=32, filter_size=(3, 3))
+        network = self.add_conv(network, result, num_filters=32, filter_size=(3, 3))
+        network = self.add_conv(network, result, num_filters=32, filter_size=(3, 3))
+        network = self.add_conv(network, result, num_filters=32, filter_size=(3, 3))
 
         # Classification layer
         network = self.add_conv(network, result, self.num_classes, (1, 1), bn=False, nonlinearity=False, bias=True)

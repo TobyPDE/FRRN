@@ -7,6 +7,7 @@ data.txt
 logs/
 .vscode/
 data/
+cs_dataloader/build
 
 # Created by https://www.gitignore.io/api/pycharm,python
 

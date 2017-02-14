@@ -137,7 +137,6 @@ def compute_grads(grad_fns, param_blocks, *args):
     acc_grads = []
     prev = []
     for i in range(len(grad_fns) - 1, -1, -1):
-        print("Evaluate block %d/%d" % (i + 1, len(grad_fns)))
         result = grad_fns[i](*args, *prev)
 
         if i == len(grad_fns) - 1:
