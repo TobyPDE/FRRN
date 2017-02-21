@@ -12,6 +12,7 @@ This repository contains code to train and qualitatively evaluate
 In order to run the code, your setup has to meet the following minimum requirements (tested versions in parentheses. Other versions might work, too):
 
 * Python 3.5 (3.5.1) (Please note: Python 3.4 is not supported at the moment. An update will be published shortly)
+    * Chianti [https://github.com/TobyPDE/chianti](https://github.com/TobyPDE/chianti)
     * Theano (0.9.0.dev1) with cuDNN (5004)
     * Lasagne (0.2.dev1)
     * OpenCV (3.1.0)
