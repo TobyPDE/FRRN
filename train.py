@@ -1,6 +1,6 @@
 import time
 
-import cs_dataloader
+import chianti
 import lasagne
 import logsystem
 import dltools
@@ -155,18 +155,25 @@ with dltools.utility.VerboseTimer("Compile validation function"):
 with dltools.utility.VerboseTimer("Optimize"):
     logger = logsystem.FileLogWriter(config["log_filename"])
 
-    provider = cs_dataloader.DataProvider(
-        imgs=dltools.utility.get_image_label_pairs(config["cityscapes_folder"], "train"),
+    provider = chianti.DataProvider(
+        iterator=chianti.random_iterator(dltools.utility.get_image_label_pairs(config["cityscapes_folder"], "train")),
         batchsize=config["batch_size"],
-        subsample=config["sample_factor"],
-        gamma=0.05,
-        translate=40)
+        augmentors=[
+            chianti.cityscapes_label_transformation_augmentor(),
+            chianti.subsample_augmentor(config["sample_factor"]),
+            chianti.gamma_augmentor(0.05),
+            chianti.translation_augmentor(20)
+        ]
+    )
 
-    validation_provider = cs_dataloader.DataProvider(
-        imgs=dltools.utility.get_image_label_pairs(config["cityscapes_folder"], "val"),
+    validation_provider = chianti.DataProvider(
+        iterator=chianti.sequential_iterator(dltools.utility.get_image_label_pairs(config["cityscapes_folder"], "train")),
         batchsize=config["batch_size"],
-        subsample=config["sample_factor"],
-        iterator="sequential")
+        augmentors=[
+            chianti.cityscapes_label_transformation_augmentor(),
+            chianti.subsample_augmentor(config["sample_factor"]),
+        ]
+    )
 
     optimizer = dltools.optimizer.MiniBatchOptimizer(
         compute_update,

@@ -126,11 +126,9 @@ class SegmentationValidationHook(object):
                     key="status",
                     message="--> Validate batch %d/%d" % (batch_counter + 1, self.data_provider.get_num_batches())
                 )
-                print("--> Validate batch %d/%d" % (batch_counter + 1, self.data_provider.get_num_batches()))
 
-                images, targets = self.data_provider.next()
-
-                predictions, loss = self.val_fn(images, targets)
+                batch = self.data_provider.next()
+                predictions, loss = self.val_fn(batch.imgs, batch.targets)
 
                 accumulated_loss += loss
 

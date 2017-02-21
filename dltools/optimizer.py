@@ -1,3 +1,4 @@
+import numpy as np
 import theano.tensor as T
 import time
 from . import utility
@@ -42,18 +43,17 @@ class MiniBatchOptimizer(object):
         # Start the optimization
         with utility.Uninterrupt() as u:
             while not u.interrupted:
-
-                # Advance the data_source iterators
-                # Gather the arguments for the training function
-                data = self.data_provider.next()
-
                 losses = None
                 duration = 0
 
                 for i in range(10):
+                    # Advance the data_source iterators
+                    # Gather the arguments for the training function
+                    data = self.data_provider.next()
+
                     update_counter += 1
                     start = time.time()
-                    losses = self.train_fn(data[0], data[1], update_counter)
+                    losses = self.train_fn(data.imgs, data.targets, update_counter)
                     duration = time.time() - start
 
                 self.call_hooks(
