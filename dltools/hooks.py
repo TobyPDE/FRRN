@@ -25,8 +25,14 @@ class LoggingHook(object):
         # Base the reporting on the specific tags
         self.logger.log(
             key="status",
-            message="-> Done performing update (%.2fs)" % kwargs["runtime"]
+            message="Log at iteration %d" % kwargs["update_counter"]
         )
+
+        self.logger.log(
+            key="update_counter",
+            message=kwargs["update_counter"]
+        )
+
         self.logger.log(
             key="update_runtime",
             message=kwargs["runtime"]

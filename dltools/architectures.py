@@ -283,7 +283,8 @@ class FRRNABuilder(AbstractFRRNBuilder):
         
         self.add_split([network, autobahn], result)
         self.alpha = 1 - math.pow(1 - 0.1, 1 / 4)
-        
+
+        """
         # Pooling
         network = lasagne.layers.MaxPool2DLayer(network, stride=2, pool_size=(2, 2))
         network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 1)
@@ -335,6 +336,8 @@ class FRRNABuilder(AbstractFRRNBuilder):
         
         # Unpooling
         network = BilinearUpscaleLayer(network, factor=2)
+        """
+
         network = lasagne.layers.ConcatLayer([network, autobahn])
 
         network = self.add_ru(network, result, self.base_channels + self.lanes, self.base_channels)

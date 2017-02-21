@@ -133,20 +133,27 @@ def compute_grads(grad_fns, param_blocks, *args):
     """
     Computes the gradients block wise.
     """
-    loss = 0
-    acc_grads = []
+    acc_grads = [None] * len(grad_fns)
     prev = []
-    for i in range(len(grad_fns) - 1, -1, -1):
-        result = grad_fns[i](*args, *prev)
 
-        if i == len(grad_fns) - 1:
-            loss = result[0]
-            result = result[1:]
+    # Compute the first iteration
+    i = len(grad_fns) - 1
+    result = grad_fns[i](*args, *prev)
+    loss = result[0]
+    result = result[1:]
+
+    current = result[:len(param_blocks[i])]
+    prev = result[len(param_blocks[i]):]
+    acc_grads[len(grad_fns) - 1 - i] = current[::-1]
+
+    for i in range(len(grad_fns) - 2, -1, -1):
+        result = grad_fns[i](*args, *prev)
 
         current = result[:len(param_blocks[i])]
         prev = result[len(param_blocks[i]):]
-        acc_grads.extend(current[::-1])
-    return loss, acc_grads[::-1]
+        acc_grads[len(grad_fns) - 1 - i] = current[::-1]
+
+    return loss, sum(acc_grads, [])[::-1]
 
 
 def get_gradient_variables(params):

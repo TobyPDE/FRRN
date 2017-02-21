@@ -42,15 +42,19 @@ class MiniBatchOptimizer(object):
         # Start the optimization
         with utility.Uninterrupt() as u:
             while not u.interrupted:
-                update_counter += 1
 
                 # Advance the data_source iterators
                 # Gather the arguments for the training function
                 data = self.data_provider.next()
 
-                start = time.time()
-                losses = self.train_fn(data[0], data[1], update_counter)
-                duration = time.time() - start
+                losses = None
+                duration = 0
+
+                for i in range(10):
+                    update_counter += 1
+                    start = time.time()
+                    losses = self.train_fn(data[0], data[1], update_counter)
+                    duration = time.time() - start
 
                 self.call_hooks(
                     update_counter=update_counter,

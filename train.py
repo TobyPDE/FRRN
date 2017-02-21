@@ -1,3 +1,5 @@
+import time
+
 import cs_dataloader
 import lasagne
 import logsystem
@@ -126,16 +128,13 @@ with dltools.utility.VerboseTimer("Compile update functions"):
         updates=updates,
     )
 
+
     def compute_update(imgs, targets, update_counter):
         # Compute the learning rate
         lr = np.float32(1e-3)
-        if update_counter > 60000:
-            lr = np.float32(1e-4)
-        
         # Compute all gradients
-        forward_pass_fn(imgs, targets);
+        forward_pass_fn(imgs, targets)
         loss, grads = dltools.hybrid_training.compute_grads(grad_fns, param_blocks, imgs, targets)
-        print("loss=%e, learning_rate=%e, update_counter=%d" % (loss, lr, update_counter))
         update_fn(lr, *grads)
         return loss
 
