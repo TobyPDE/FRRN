@@ -3,7 +3,7 @@ from logsystem import FileLogReader
 import numpy as np
 import time
 
-history = 25
+history = 2
 log_filename = sys.argv[1]
 
 reader = FileLogReader(log_filename)
@@ -104,4 +104,4 @@ while True:
     except:
         pass
 
-    time.sleep(1)
+    time.sleep(2.5)

@@ -56,8 +56,6 @@ class SnapshotHook(object):
         :param frequency: The snapshot frequency.
         :param tags: The tags at which a snapshot shall be generated
         """
-        if tags is None:
-            tags = ["before_get_data"]
         self.filename = filename
         self.network = network
         self.frequency = frequency
@@ -71,7 +69,7 @@ class SnapshotHook(object):
         :return:
         """
         # Run the hook now?
-        if len(set(self.tags).intersection(kwargs.keys())) > 0 and kwargs["update_counter"] % self.frequency == 0:
+        if kwargs["update_counter"] % self.frequency == 0:
             # Yes
             np.savez(
                 "%s_snapshot_%d.npz" % (self.filename, kwargs["update_counter"]),
@@ -128,6 +126,7 @@ class SegmentationValidationHook(object):
                 )
 
                 batch = self.data_provider.next()
+                targets = batch.targets
                 predictions, loss = self.val_fn(batch.imgs, batch.targets)
 
                 accumulated_loss += loss

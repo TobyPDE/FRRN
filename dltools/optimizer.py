@@ -38,7 +38,7 @@ class MiniBatchOptimizer(object):
         """
         Runs the main optimization loop until it is interrupted by the user via CTRL+C.
         """
-        update_counter = -1
+        update_counter = 0
 
         # Start the optimization
         with utility.Uninterrupt() as u:
@@ -49,12 +49,15 @@ class MiniBatchOptimizer(object):
                 for i in range(10):
                     # Advance the data_source iterators
                     # Gather the arguments for the training function
+                    start = time.time()
                     data = self.data_provider.next()
+                    data_duration = time.time() - start
 
                     update_counter += 1
                     start = time.time()
                     losses = self.train_fn(data.imgs, data.targets, update_counter)
                     duration = time.time() - start
+                    print("data: %fs, update: %fs" % (data_duration, duration))
 
                 self.call_hooks(
                     update_counter=update_counter,

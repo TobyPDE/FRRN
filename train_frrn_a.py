@@ -35,12 +35,12 @@ config["cityscapes_folder"] = dltools.utility.get_interactive_input(
 
 config["model_filename"] = dltools.utility.get_interactive_input(
     "Enter model filename",
-    "model_filename.txt",
+    "model_frrn_a_filename.txt",
     config["model_filename"])
 
 config["log_filename"] = dltools.utility.get_interactive_input(
     "Enter log filename",
-    "log_filename.txt",
+    "log_frrn_a_filename.txt",
     config["log_filename"])
 
 ########################################################################################################################
