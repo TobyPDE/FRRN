@@ -1,5 +1,4 @@
-import time
-
+import pickle
 import chianti
 import lasagne
 import logsystem
@@ -21,7 +20,8 @@ config = {
     "snapshot_frequency": 500,
     "base_channels": 48,
     "fr_channels": 32,
-    "cityscapes_folder": "/"
+    "cityscapes_folder": "/",
+    "iterator": "random"  # 'sample' oversamples minority classes, 'random' simply perform standard epochs
 }
 
 ########################################################################################################################
@@ -158,16 +158,35 @@ with dltools.utility.VerboseTimer("Compile validation function"):
 with dltools.utility.VerboseTimer("Optimize"):
     logger = logsystem.FileLogWriter(config["log_filename"])
 
-    provider = chianti.DataProvider(
-        iterator=chianti.random_iterator(dltools.utility.get_image_label_pairs(config["cityscapes_folder"], "train")),
-        batchsize=config["batch_size"],
-        augmentors=[
-            chianti.cityscapes_label_transformation_augmentor(),
-            chianti.subsample_augmentor(config["sample_factor"]),
-            chianti.gamma_augmentor(0.05),
-            chianti.translation_augmentor(20)
-        ]
-    )
+    augmentors = [
+        chianti.cityscapes_label_transformation_augmentor(),
+        chianti.subsample_augmentor(config["sample_factor"]),
+        chianti.gamma_augmentor(0.05),
+        chianti.translation_augmentor(20)
+    ]
+    images = dltools.utility.get_image_label_pairs(config["cityscapes_folder"], "train")
+
+    if config["iterator"] == "sample":
+        provider = chianti.DataProvider(
+            iterator=chianti.random_iterator(images),
+            batchsize=config["batch_size"],
+            augmentors=augmentors
+        )
+    else:
+        # Load the image weights
+        with open("train.pkl", "rb") as f:
+            w = pickle.load(f)
+
+        weights = []
+        for img in images:
+            image_name = img[0].split("/")[-1]
+            weights.append(w[image_name])
+
+        provider = chianti.DataProvider(
+            iterator=chianti.sample_iterator(images, weights),
+            batchsize=config["batch_size"],
+            augmentors=augmentors
+        )
 
     validation_provider = chianti.DataProvider(
         iterator=chianti.sequential_iterator(dltools.utility.get_image_label_pairs(config["cityscapes_folder"], "val")),
