@@ -15,8 +15,8 @@ config = {
     "batch_size": 3,
     "sample_factor": 4,
     "validation_frequency": 500,
-    "model_filename": "models/frrn_b.npz",
-    "log_filename": "logs/frrn_b.log",
+    "model_filename": "models/frrn_a.npz",
+    "log_filename": "logs/frrn_a.log",
     "snapshot_frequency": 500,
     "base_channels": 48,
     "fr_channels": 32,
@@ -166,7 +166,7 @@ with dltools.utility.VerboseTimer("Optimize"):
     ]
     images = dltools.utility.get_image_label_pairs(config["cityscapes_folder"], "train")
 
-    if config["iterator"] == "sample":
+    if config["iterator"] == "random":
         provider = chianti.DataProvider(
             iterator=chianti.random_iterator(images),
             batchsize=config["batch_size"],
