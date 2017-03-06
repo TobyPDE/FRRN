@@ -174,7 +174,7 @@ with dltools.utility.VerboseTimer("Optimize"):
         )
     else:
         # Load the image weights
-        with open("train.pkl", "rb") as f:
+        with open("data_weights.pkl", "rb") as f:
             w = pickle.load(f)
 
         weights = []
