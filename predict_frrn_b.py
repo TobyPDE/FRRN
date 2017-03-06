@@ -24,12 +24,12 @@ config = {
 
 config["cityscapes_folder"] = dltools.utility.get_interactive_input(
     "Enter path to CityScapes folder",
-    "cityscapes_folder.txt",
+    "cache/cityscapes_folder.txt",
     config["cityscapes_folder"])
 
 config["model_filename"] = dltools.utility.get_interactive_input(
     "Enter model filename",
-    "model_filename.txt",
+    "cache/model_filename.txt",
     config["model_filename"])
 
 ########################################################################################################################

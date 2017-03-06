@@ -1,9 +1,5 @@
-cityscapes_folder.txt
-model_*filename.txt
-model_filename_2.txt
-log_*filename.txt
-log_filename_2.txt
-data.txt
+*snapshot*
+cache/*.txt
 logs/
 *_snapshot*
 .vscode/
