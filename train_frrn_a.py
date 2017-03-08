@@ -21,7 +21,7 @@ config = {
     "base_channels": 48,
     "fr_channels": 32,
     "cityscapes_folder": "/",
-    "iterator": "random"  # 'sample' oversamples minority classes, 'random' simply perform standard epochs
+    "iterator": "sample"  # 'sample' oversamples minority classes, 'random' simply perform standard epochs
 }
 
 ########################################################################################################################
@@ -89,14 +89,14 @@ with dltools.utility.VerboseTimer("Define loss"):
         predictions,
         target_var,
         batch_size=config["batch_size"],
-        multiplier=32)
+        multiplier=16)
 
     # Validation classification loss (supervised)
     test_classification_loss = dltools.utility.bootstrapped_categorical_cross_entropy4d_loss(
         test_predictions,
         target_var,
         batch_size=config["batch_size"],
-        multiplier=32)
+        multiplier=16)
 
     loss = classification_loss
 
@@ -122,6 +122,7 @@ with dltools.utility.VerboseTimer("Compile update functions"):
 
     # Choose whatever optimizer you like
     updates = lasagne.updates.adam(grad_vars, params, learning_rate=learning_rate)
+    #updates = lasagne.updates.sgd(grad_vars, params, learning_rate=learning_rate)
 
     update_fn = theano.function(
         inputs=[learning_rate] + grad_vars,
@@ -131,7 +132,7 @@ with dltools.utility.VerboseTimer("Compile update functions"):
 
     def compute_update(imgs, targets, update_counter):
         # Compute the learning rate
-        lr = np.float32(1e-3)
+        lr = np.float32(1e-4)
         if update_counter > 45000:
             lr = np.float32(1e-4)
             
@@ -161,8 +162,8 @@ with dltools.utility.VerboseTimer("Optimize"):
     augmentors = [
         chianti.cityscapes_label_transformation_augmentor(),
         chianti.subsample_augmentor(config["sample_factor"]),
+        chianti.translation_augmentor(30), 
         chianti.gamma_augmentor(0.05),
-        chianti.translation_augmentor(20)
     ]
     images = dltools.utility.get_image_label_pairs(config["cityscapes_folder"], "train")
 

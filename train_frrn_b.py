@@ -161,7 +161,7 @@ with dltools.utility.VerboseTimer("Optimize"):
         chianti.cityscapes_label_transformation_augmentor(),
         chianti.subsample_augmentor(config["sample_factor"]),
         chianti.gamma_augmentor(0.05),
-        chianti.translation_augmentor(20)
+        chianti.translation_augmentor(40)
     ]
     images = dltools.utility.get_image_label_pairs(config["cityscapes_folder"], "train")
 

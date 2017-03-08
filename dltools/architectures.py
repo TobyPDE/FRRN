@@ -356,7 +356,7 @@ class FRRNBBuilder(AbstractFRRNBuilder):
         :param multiplier: The channel multiplier.
         """
         super(FRRNBBuilder, self).__init__(**kwargs)
-        self.alpha = 1 - math.pow(1 - 0.1, 1 / 5)
+        self.alpha = 1 - math.pow(1 - 0.1, 1 / 2)
 
     def build(self, input_var, input_shape):
         """
@@ -383,7 +383,6 @@ class FRRNBBuilder(AbstractFRRNBuilder):
         autobahn = self.add_conv(network, result, self.lanes, (1, 1), nonlinearity=False)
 
         self.add_split([network, autobahn], result)
-        self.alpha = 1 - math.pow(1 - 0.1, 1 / 4)
 
         # Pooling
         network = lasagne.layers.MaxPool2DLayer(network, stride=2, pool_size=(2, 2))
@@ -392,7 +391,6 @@ class FRRNBBuilder(AbstractFRRNBuilder):
         network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 1)
 
         self.add_split([network, autobahn], result)
-        self.alpha = 1 - math.pow(1 - 0.1, 1 / 3)
 
         # Pooling
         network = lasagne.layers.MaxPool2DLayer(network, stride=2, pool_size=(2, 2))
@@ -406,7 +404,6 @@ class FRRNBBuilder(AbstractFRRNBuilder):
         network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 3)
 
         self.add_split([network, autobahn], result)
-        self.alpha = 1 - math.pow(1 - 0.1, 1 / 2)
 
         network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 3)
 
