@@ -11,7 +11,7 @@ This repository contains code to train and qualitatively evaluate
 
 In order to run the code, your setup has to meet the following minimum requirements (tested versions in parentheses. Other versions might work, too):
 
-* Python 3.5 (3.5.1) (Please note: Python 3.4 is not supported at the moment. An update will be published shortly)
+* Python 3.5 (3.5)
     * Chianti [https://github.com/TobyPDE/chianti](https://github.com/TobyPDE/chianti)
     * Theano (0.9.0.dev1) with cuDNN (5004)
     * Lasagne (0.2.dev1)
@@ -25,7 +25,7 @@ Step by step guide:
 
 1. Download and extract the files *gtFine_trainvaltest.zip* and *leftImg8bit_trainvaltest.zip (11GB)* from the [CityScapes website](https://www.cityscapes-dataset.com/downloads/). 
 2. Clone the repository
-3. Change into the *FRRN* directory and run `$ python predict.py`
+3. Change into the *FRRN* directory and run `$ python predict_frrn_[a|b].py`
 4. When being asked, enter the path to the directory where you extracted the dataset to and choose the default model file. 
 
 ## How do I train a new model?
@@ -34,8 +34,9 @@ Step by step guide:
 
 1. Download and extract the files *gtFine_trainvaltest.zip* and *leftImg8bit_trainvaltest.zip (11GB)* from the [CityScapes website](https://www.cityscapes-dataset.com/downloads/). 
 2. Clone the repository
-3. Inspect the configuration at the beginning of the file `train.py` and change it if necessary.
-3. Run `$ python train.py`
+3. Inspect the configuration at the beginning of the file `train_frrn_[a|b].py` and change it if necessary.
+4. Run `$ python train_frrn_[a|b].py`
+5. When being asked, enter the path to the directory where you extracted the dataset to and choose a new model file and new log file. 
 
 ## How do I monitor training?
 
