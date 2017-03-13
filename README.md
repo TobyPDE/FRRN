@@ -7,6 +7,11 @@ This repository contains code to train and qualitatively evaluate
 ## Demo  Video
 [Click here to watch our video](https://www.youtube.com/watch?v=PNzQ4PNZSzc).
 
+## Important!
+We will release an updated codebase on March 13th. The update will substantially speed up training by eliminating overly redundant forward passes and loading batches truly asynchronously via a dedicated C++ extension. If you're planning to train new models, I encourage you to wait for the update as it will significantly decrease your training time.
+
+Furthermore, we improved the bad logging solution that was bundled with the initial release. Now all logs are written to the same file. You get the new logging system by pulling the latest changes from the master branch.
+
 ## Prerequisite
 
 In order to run the code, your setup has to meet the following minimum requirements (tested versions in parentheses. Other versions might work, too):
