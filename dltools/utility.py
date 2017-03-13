@@ -5,6 +5,8 @@ import time
 import theano.tensor as T
 from functools import reduce as _reduce
 
+import cityscapesutil
+
 
 class Uninterrupt(object):
     """
@@ -366,3 +368,15 @@ def opencv2tensor(image):
     return np.rollaxis(image[:,:,::-1], 2)
 
 
+def get_image_label_pairs(cs_folder, folder):
+    """
+    Creates a list of (image, label) tuples.
+
+    :param cs_folder: The cityscapes data folder
+    :param folder: The folder to load (train, val)
+    :return: A list of tuples
+    """
+    image_names = cityscapesutil.image_names(cs_folder, folder)
+    target_names = [x.replace('leftImg8bit', 'gtFine', 1) for x in image_names]
+    target_names = [x.replace('leftImg8bit', 'gtFine_labelIds') for x in target_names]
+    return list(zip(image_names, target_names))

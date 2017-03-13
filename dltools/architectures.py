@@ -241,6 +241,107 @@ class AbstractFRRNBuilder(AbstractBuilder):
         return network
 
 
+class FRRNABuilder(AbstractFRRNBuilder):
+    """
+    Builds the FRRN A architecture.
+    """
+
+    def __init__(self, **kwargs):
+        """
+        Initializes a new instance of the FRRNBBuilder.
+
+        :param base_channels: The number of base_channels.
+        :param lanes: The number of autobahn lanes.
+        :param multiplier: The channel multiplier.
+        """
+        super(FRRNABuilder, self).__init__(**kwargs)
+        self.alpha = 1 - math.pow(1 - 0.1, 1 / 2)
+
+    def build(self, input_var, input_shape):
+        """
+        Builds the network.
+
+        :param input_var: The input variable.
+        :param input_shape: The input shape.
+        :return: The resulting network.
+        """
+        result = nnet.NeuralNetwork()
+
+        network = lasagne.layers.InputLayer(
+            input_var=input_var,
+            shape=input_shape)
+        result.input_layers.append(network)
+
+        network = self.add_conv(network, result, self.base_channels, (5, 5))
+
+        # Add the full-res block
+        network = self.add_ru(network, result, self.base_channels, self.base_channels)
+        network = self.add_ru(network, result, self.base_channels, self.base_channels)
+        network = self.add_ru(network, result, self.base_channels, self.base_channels)
+
+        autobahn = self.add_conv(network, result, self.lanes, (1, 1), nonlinearity=False)
+        
+        self.add_split([network, autobahn], result)
+        self.alpha = 1 - math.pow(1 - 0.1, 1 / 1)
+
+        # Pooling
+        network = lasagne.layers.MaxPool2DLayer(network, stride=2, pool_size=(2, 2))
+        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 1)
+        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 1)
+        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 1)
+        
+        # Pooling
+        network = lasagne.layers.MaxPool2DLayer(network, stride=2, pool_size=(2, 2))
+        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 2)
+        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 2)
+        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 2)
+        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 2)
+
+        # Pooling
+        network = lasagne.layers.MaxPool2DLayer(network, stride=2, pool_size=(2, 2))
+        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 3)
+        
+        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 3)
+
+        # Pooling
+        network = lasagne.layers.MaxPool2DLayer(network, stride=2, pool_size=(2, 2))
+
+        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 4, multiplier=self.multiplier ** 3)
+        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 4, multiplier=self.multiplier ** 3)
+
+        # Unpooling
+        network = BilinearUpscaleLayer(network, factor=2)
+        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 3, multiplier=self.multiplier ** 2)
+        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 3, multiplier=self.multiplier ** 2)
+
+        # Unpooling
+        network = BilinearUpscaleLayer(network, factor=2)
+        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 2)
+        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 2)
+        
+        # Unpooling
+        network = BilinearUpscaleLayer(network, factor=2)
+        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 1)
+        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 1)
+
+        # Unpooling
+        network = BilinearUpscaleLayer(network, factor=2)
+
+        network = lasagne.layers.ConcatLayer([network, autobahn])
+
+        network = self.add_ru(network, result, self.base_channels + self.lanes, self.base_channels)
+        network = self.add_ru(network, result, self.base_channels, self.base_channels)
+        network = self.add_ru(network, result, self.base_channels, self.base_channels)
+        
+        # Classification layer
+        network = self.add_conv(network, result, self.num_classes, (1, 1), bn=False, nonlinearity=False, bias=True)
+        network = lasagne.layers.NonlinearityLayer(network, AbstractBuilder.log_softmax_4d)
+
+        result.output_layers.append(network)
+
+        return result
+
+
 class FRRNBBuilder(AbstractFRRNBuilder):
     """
     Builds the FRRN B architecture.
@@ -255,7 +356,7 @@ class FRRNBBuilder(AbstractFRRNBuilder):
         :param multiplier: The channel multiplier.
         """
         super(FRRNBBuilder, self).__init__(**kwargs)
-        self.alpha = 1 - math.pow(1 - 0.1, 1 / 5)
+        self.alpha = 1 - math.pow(1 - 0.1, 1 / 2)
 
     def build(self, input_var, input_shape):
         """
@@ -280,19 +381,17 @@ class FRRNBBuilder(AbstractFRRNBuilder):
         network = self.add_ru(network, result, self.base_channels, self.base_channels)
 
         autobahn = self.add_conv(network, result, self.lanes, (1, 1), nonlinearity=False)
-        
+
         self.add_split([network, autobahn], result)
-        self.alpha = 1 - math.pow(1 - 0.1, 1 / 4)
-        
+
         # Pooling
         network = lasagne.layers.MaxPool2DLayer(network, stride=2, pool_size=(2, 2))
         network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 1)
         network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 1)
         network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 1)
-        
+
         self.add_split([network, autobahn], result)
-        self.alpha = 1 - math.pow(1 - 0.1, 1 / 3)
-        
+
         # Pooling
         network = lasagne.layers.MaxPool2DLayer(network, stride=2, pool_size=(2, 2))
         network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 2)
@@ -303,9 +402,8 @@ class FRRNBBuilder(AbstractFRRNBuilder):
         # Pooling
         network = lasagne.layers.MaxPool2DLayer(network, stride=2, pool_size=(2, 2))
         network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 3)
-        
+
         self.add_split([network, autobahn], result)
-        self.alpha = 1 - math.pow(1 - 0.1, 1 / 2)
 
         network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 3)
 
@@ -333,100 +431,15 @@ class FRRNBBuilder(AbstractFRRNBuilder):
         network = BilinearUpscaleLayer(network, factor=2)
         network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 2)
         network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 2)
-        
+
         # Unpooling
         network = BilinearUpscaleLayer(network, factor=2)
         network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 1)
-        
+
         network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 1)
 
         self.add_split([network, autobahn], result)
         self.alpha = 1 - math.pow(1 - 0.1, 1 / 1)
-        
-        # Unpooling
-        network = BilinearUpscaleLayer(network, factor=2)
-        network = lasagne.layers.ConcatLayer([network, autobahn])
-
-        network = self.add_ru(network, result, self.base_channels + self.lanes, self.base_channels)
-        network = self.add_ru(network, result, self.base_channels, self.base_channels)
-        network = self.add_ru(network, result, self.base_channels, self.base_channels)
-        
-        # Classification layer
-        network = self.add_conv(network, result, self.num_classes, (1, 1), bn=False, nonlinearity=False, bias=True)
-        network = lasagne.layers.NonlinearityLayer(network, AbstractBuilder.log_softmax_4d)
-
-        result.output_layers.append(network)
-
-        return result
-
-
-class FRRNCBuilder(AbstractFRRNBuilder):
-    """
-    Builds the FRRNCBuilder architecture. This is a smaller architecture intended for fast experimentation. Train
-    on four times subsampled images.
-    """
-
-    def __init__(self, **kwargs):
-        """
-        Initializes a new instance of the FRRNCBuilder.
-
-        :param base_channels: The number of base_channels.
-        :param lanes: The number of autobahn lanes.
-        :param multiplier: The channel multiplier.
-        """
-        super(FRRNCBuilder, self).__init__(**kwargs)
-
-    def build(self, input_var, input_shape):
-        """
-        Builds the network.
-
-        :param input_var: The input variable.
-        :param input_shape: The input shape.
-        :return: The resulting network.
-        """
-        result = nnet.NeuralNetwork()
-
-        network = lasagne.layers.InputLayer(
-            input_var=input_var,
-            shape=input_shape)
-        result.input_layers.append(network)
-
-        network = self.add_conv(network, result, self.base_channels, (5, 5))
-
-        # Add the full-res block
-        network = self.add_ru(network, result, self.base_channels, self.base_channels)
-        network = self.add_ru(network, result, self.base_channels, self.base_channels)
-        network = self.add_ru(network, result, self.base_channels, self.base_channels)
-
-        autobahn = self.add_conv(network, result, self.lanes, (1, 1), nonlinearity=False)
-
-        # Pooling
-        network = lasagne.layers.MaxPool2DLayer(network, stride=2, pool_size=(2, 2))
-        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 1)
-        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 1)
-        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 1)
-
-        # Pooling
-        network = lasagne.layers.MaxPool2DLayer(network, stride=2, pool_size=(2, 2))
-        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 2)
-        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 2)
-        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 2)
-        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 2)
-
-        # Pooling
-        network = lasagne.layers.MaxPool2DLayer(network, stride=2, pool_size=(2, 2))
-        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 3)
-        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 3)
-
-        # Unpooling
-        network = BilinearUpscaleLayer(network, factor=2)
-        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 2)
-        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 2)
-
-        # Unpooling
-        network = BilinearUpscaleLayer(network, factor=2)
-        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 1)
-        network, autobahn = self.add_frru(network, autobahn, result, self.multiplier ** 1)
 
         # Unpooling
         network = BilinearUpscaleLayer(network, factor=2)
@@ -443,3 +456,4 @@ class FRRNCBuilder(AbstractFRRNBuilder):
         result.output_layers.append(network)
 
         return result
+        

@@ -1,12 +1,10 @@
-cityscapes_folder.txt
-model_filename.txt
-model_filename_2.txt
-log_filename.txt
-log_filename_2.txt
-data.txt
+*snapshot*
+cache/*.txt
 logs/
+*_snapshot*
 .vscode/
 data/
+cs_dataloader/build
 
 # Created by https://www.gitignore.io/api/pycharm,python
 
