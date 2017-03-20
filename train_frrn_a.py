@@ -132,7 +132,7 @@ with dltools.utility.VerboseTimer("Compile update functions"):
 
     def compute_update(imgs, targets, update_counter):
         # Compute the learning rate
-        lr = np.float32(1e-4)
+        lr = np.float32(1e-3)
         if update_counter > 45000:
             lr = np.float32(1e-4)
             
