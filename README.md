@@ -4,6 +4,9 @@ This repository contains code to train and qualitatively evaluate
 *Full Resolution Residual Networks (FRRNs)* as described in
 **Tobias Pohlen, Alexander Hermans, Markus Mathias, Bastian Leibe. Full Resolution Residual Networks for Semantic Segmentation in Street Scenes. [arXiv:1611.08323](https://arxiv.org/abs/1611.08323)**. 
 
+## Important Updates
+An update that adds support for python 2.7 and python 3.4 will be published at the end of June 2017. Furthermore, we will push prebuilt binaries for Chianti in order to simplify the installation of dependencies.
+
 ## Demo  Video
 [Click here to watch our video](https://www.youtube.com/watch?v=PNzQ4PNZSzc).
 
@@ -46,6 +49,7 @@ Simply run `$ python log_monitor.py [your log file]`.
 
 The MIT License (MIT)
 Copyright (c) 2016 Tobias Pohlen
+Copyright (c) 2017 Google Inc.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
