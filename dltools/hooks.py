@@ -1,152 +1,159 @@
+"""Defines hooks that can run during training."""
+
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import lasagne
 import numpy as np
-from sklearn.metrics import confusion_matrix
+from sklearn import metrics
 
 
 class LoggingHook(object):
-    """
-    This hook writes information to a log file.
-    """
+    """This hook writes information to a log file."""
 
     def __init__(self, logger):
-        """
-        Initializes a new instance of the LoggingHook class.
+        """Initializes a new instance of the LoggingHook class.
 
-        :param logger: A logger.
+        Args:
+            logger: A logger instance.
         """
-        self.logger = logger
+        self._logger = logger
 
     def update(self, **kwargs):
-        """
-        Performs the hook
-        :param kwargs: A list of named arguments.
+        """Executes the hook.
+
+        Args:
+            **kwargs: Optimizer state dictionary.
         """
 
-        self.logger.log(
+        self._logger.log(
             key="status",
             message="Log at iteration %d" % kwargs["update_counter"]
         )
 
-        self.logger.log(
+        self._logger.log(
             key="update_counter",
             message=kwargs["update_counter"]
         )
 
-        self.logger.log(
+        self._logger.log(
             key="update_runtime",
             message=kwargs["runtime"]
         )
-        self.logger.log(
+        self._logger.log(
             key="losses",
             message=np.asarray(kwargs["losses"])
         )
 
 
 class SnapshotHook(object):
-    """
-    This hook creates regular snapshots of the network.
-    """
-    def __init__(self, filename, network, frequency=300):
-        """
-        Initializes a new instance of the SnapshotHook class.
+    """Hook for storing snapshots of the network's weights."""
 
-        :param filename: The base filename of the model.
-        :param network: The network instance to store.
-        :param frequency: The snapshot frequency.
+    def __init__(self, filename, network, interval):
+        """Initializes a new instance of the SnapshotHook class.
+
+        Args:
+            filename: The base filename of the model.
+            network: The network instance to store.
+            interval: The snapshot interval.
         """
-        self.filename = filename
-        self.network = network
-        self.frequency = frequency
+        self._filename = filename
+        self._network = network
+        self._interval = interval
 
     def update(self, **kwargs):
-        """
-        Performs the hook.
+        """Executed the hook.
 
-        :param kwargs:
-        :return:
+        Args:
+            **kwargs: The optimizer dictionary.
         """
         # Run the hook now?
-        if kwargs["update_counter"] % self.frequency == 0:
+        if kwargs["update_counter"] % self._interval == 0:
             # Yes
             np.savez(
-                "%s_snapshot_%d.npz" % (self.filename, kwargs["update_counter"]),
-                *lasagne.layers.get_all_param_values(self.network))
+                "%s_snapshot_%d.npz" % (
+                    self._filename, kwargs["update_counter"]),
+                *lasagne.layers.get_all_param_values(self._network))
 
 
 class SegmentationValidationHook(object):
-    """
-    Performs a validation run for semantic segmentation at certain times in the training process. Uses a data provider
-    in order to
-    """
-    def __init__(self, val_fn, data_provider, logger, frequency=300, num_classes=19):
-        """
-        Initializes a new instance of the ValidationHook class.
+    """Performs a validation run for semantic segmentation."""
 
-        :param val_fn: A function that returns the predictions for each image and a list of losses.
-        :param data: A tuple of (images, targets).
-        :param batch_size: The batch size.
-        :param logger: A logger instance.
-        :param frequency: The validation frequency.
+    def __init__(self, val_fn, data_provider, logger, interval=300,
+                 num_classes=19):
+        """Initializes a new instance of the SegmentationValidationHook class.
+
+        Args:
+            val_fn: A function that returns the predictions for each image and
+            a list of losses.
+            data_provider: A chianti data provider.
+            logger: A logger instance.
+            interval: The validation interval.
         """
-        self.val_fn = val_fn
-        self.data_provider = data_provider
-        self.logger = logger
-        self.frequency = frequency
-        self.num_classes = num_classes
+        self._val_fn = val_fn
+        self._data_provider = data_provider
+        self._logger = logger
+        self._interval = interval
+        self._num_classes = num_classes
 
     def update(self, **kwargs):
-        """
-        Runs the validation function hook.
-        """
+        """Runs the validation hook."""
 
-        if kwargs["update_counter"] % self.frequency == 0 and kwargs["update_counter"] > 0:
-            self.logger.log(
+        update_now = kwargs["update_counter"] % self._interval == 0
+        if update_now and kwargs["update_counter"] > 0:
+            self._logger.log(
                 key="validation_checkpoint",
                 message=kwargs["update_counter"]
             )
-            self.logger.log(
+            self._logger.log(
                 key="status",
                 message="-> Start validation run"
             )
 
-            # Run the validation
-            # Create the confusion matrix
-            conf_matrix = np.zeros((self.num_classes, self.num_classes)).astype('int64')
+            # Initialize the confusion matrix
+            conf_matrix = np.zeros(
+                (self._num_classes, self._num_classes)).astype('int64')
 
             accumulated_loss = 0
 
-            self.data_provider.reset()
-            for batch_counter in range(self.data_provider.get_num_batches()):
-                self.logger.log(
+            self._data_provider.reset()
+            for batch_counter in range(self._data_provider.get_num_batches()):
+                self._logger.log(
                     key="status",
-                    message="--> Validate batch %d/%d" % (batch_counter + 1, self.data_provider.get_num_batches())
-                )
+                    message="--> Validate batch %d/%d" % (
+                        batch_counter + 1,
+                        self._data_provider.get_num_batches()))
 
-                batch = self.data_provider.next()
-                targets = batch.targets
-                predictions, loss = self.val_fn(batch.imgs, batch.targets)
+                batch = self._data_provider.next()
+                images = batch[0]
+                targets = batch[1]
+                predictions, loss = self._val_fn(images, targets)
 
                 accumulated_loss += loss
 
                 # Mark the don't care predictions
                 # Flatten the predictions and targets
                 flat_predictions = predictions.flatten()
-                flat_targets = targets.flatten()
-                # Get the position of the don't cares
-                mask = flat_targets != -1
+                non_void_pixels = (np.max(targets, axis=1) != 0.0).flatten()
+                flat_targets = np.argmax(targets, axis=1).flatten()
+
                 # Select the non-don't cares
-                flat_targets = flat_targets[mask]
-                flat_predictions = flat_predictions[mask]
+                flat_targets = flat_targets[non_void_pixels]
+                flat_predictions = flat_predictions[non_void_pixels]
 
-                conf_matrix += confusion_matrix(flat_targets, flat_predictions, labels=list(range(self.num_classes))).astype('int64')
+                conf_matrix += metrics.confusion_matrix(
+                    flat_targets,
+                    flat_predictions,
+                    labels=np.arange(self._num_classes, dtype='int64'))
 
-            accumulated_loss /= self.data_provider.get_num_batches()
+            accumulated_loss /= self._data_provider.get_num_batches()
 
-            self.logger.log(
+            self._logger.log(
                 key="conf_matrix",
                 message=conf_matrix
             )
-            self.logger.log(
+            self._logger.log(
                 key="validation_loss",
                 message=accumulated_loss
             )

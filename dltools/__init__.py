@@ -1,12 +1,9 @@
-"""
-Deep learning toolbox for the use with lasagne.
-"""
+"""Deep learning toolbox for the use with lasagne."""
 
-from . import optimizer
-from . import nnet
-from . import architectures
-from . import utility
-from . import hooks
-from . import data
-from . import hybrid_training
-from . import augmentation
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
+import sys
+
+sys.setrecursionlimit(10000)

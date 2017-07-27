@@ -5,6 +5,7 @@ logs/
 .vscode/
 data/
 cs_dataloader/build
+*.swp
 
 # Created by https://www.gitignore.io/api/pycharm,python
 
