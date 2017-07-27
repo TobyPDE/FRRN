@@ -19,8 +19,8 @@ Please cite the work as follows:
   booktitle={Computer Vision and Pattern Recognition (CVPR), 2017 IEEE Conference on},
   year={2017}
 }
-
 ```
+
 ## Demo  Video
 [Click here to watch our video](https://www.youtube.com/watch?v=PNzQ4PNZSzc).
 
